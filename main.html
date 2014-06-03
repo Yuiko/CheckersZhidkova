@@ -1,0 +1,321 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<title>Главная</title>
+	<meta name="" content="">
+	<link type="text/css" rel="stylesheet" href="css/mainPage.css">
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script src="raphael-min.js" type="text/javascript"></script>
+
+</head>
+<body onload="generate_table()">
+	<script> 
+		
+	
+		function generate_table(){
+
+			movered = true;
+			colum_count=document.getElementById("column").value;
+			line_count=document.getElementById("line").value;
+			if ($('svg')) {
+				$('svg').remove();
+			}
+			var arr_check = new Array();
+
+			 
+			//создание доски
+			var table = '<table class="table-desk">';
+ 			//строки
+			for (i = 0; i < line_count; i++) {
+    			table = table +'<tr>';		
+				arr_check[i] = new Array();				
+				//столбцы
+    				for (j = 0; j < colum_count; j++) {
+						if (((i % 2 == 0)&&(j % 2 == 0))||((i % 2 == 1)&&(j % 2 == 1))){
+							table = table +'<td class="dark" id = "'+i+j+'"></td>';
+					    } else {
+							table = table +'<td class="lite" id = "'+i+j+'"></td>';
+						}
+					arr_check[i][j] = "n";
+    				}
+    				table = table + '</tr>';
+			}
+			table = table + '</table>';
+			$('#desk').html(table);
+			
+			//Расстановка шашек			
+			var paper = Raphael($("#00").offset().left, $("#00").offset().top, colum_count*50+colum_count*4, line_count*50+line_count*4);
+			
+			//объединение 
+			var stblack = paper.set();
+			var stred = paper.set();
+			//Количество красных шашек
+			r_count = 0;	
+			
+			//строки
+			for (i = 0; i < line_count; i++) { 				
+					//столбцы			
+    				for (j = 0; j < colum_count; j++) {
+						if (((i % 2 == 0)&&(j % 2 == 0))||((i % 2 == 1)&&(j % 2 == 1))){
+							if (i<line_count/2-1){	
+								//номер строки (столбца) * на ширину ячейки + номер * ширину обводки
+								stred.push (paper.circle(j*50+25+j*4,i*50+25+i*2, 20).attr("fill", "#f00"));
+								arr_check[j][i]="r";
+								r_count++;
+							} else if(i>line_count/2){						
+								stblack.push (paper.circle(j*50+25+j*4, i*50+25+i*2, 20));	
+								arr_check[j][i]="b";
+							}
+						}						
+    				}
+			}
+			//Количество черных шашек
+			b_count = r_count;
+			document.getElementById("inr").innerHTML="<h2>Счет</h2>краcных " + r_count+'<br>'+"черных " + b_count;
+			
+			//задание стиля шашек
+			stblack.attr("fill", "#000");
+			stblack.attr("stroke", "#fff");
+			//stred.attr("fill", "#f00");
+			//stred.attr("stroke", "#fff");
+			move_b=true;
+			
+			var start = function () {
+                    this.ox = this.attr("cx");
+                    this.oy = this.attr("cy");
+					ox = this.ox;
+					oy = this.oy;
+					
+					console.log(arr_check);
+					//подсвет ячеек
+                    this.animate({r: 25}, 500, ">");
+					
+					//номер ячейки c которoй пошли
+					 arr_oy = Math.floor(oy/52);
+					 arr_ox = Math.floor(ox/54);
+					 
+					 //только вперед проверка на возможность съесть
+					/* if (move_b){ //this.attr('fill')=='#f00' pзаменить на цвет
+
+						if (arr_check[arr_oy-1][arr_ox-1]=="n")
+							document.getElementById(arr_oy-1+""+arr_ox-1).style.background = "#ffff00";
+						if (arr_check[arr_oy-1][arr_ox+1]=="n"){ar = arr_ox+1;
+							document.getElementById(arr_oy-1+""+ar).style.background = "#ffff00";}
+							//проверка на возможность съесть
+					}else{
+					
+						if (arr_check[arr_oy+1][arr_ox-1]=="n"){ar =arr_oy+1; 
+							document.getElementById(ar+""+arr_ox-1).style.background = "#ffff00";}
+						if (arr_check[arr_oy+1][arr_ox+1]=="n"){ar = arr_oy+1;arx = arr_ox+1;
+							document.getElementById(ar+""+arx).style.background = "#ffff00";}
+					}*/
+								
+					
+					
+					
+                },
+                move = function (dx, dy) {
+				this.toFront();
+				//if (dx<50){dx=0} else {dx=round(dx/50)*50;}
+                    this.attr({cx: this.ox + dx, cy: this.oy + dy});
+					
+					 
+                },
+                up = function () {
+					var x=this.attr("cx");
+					var y=this.attr("cy");
+					//alert (x+" "+y);
+					
+					//номер ячейки на которую собираемся поставить шашку									
+					var arr_y = Math.floor(y/52);
+					var arr_x = Math.floor(x/54);
+					
+					
+					 
+					 //изменить на перерисовку всех
+					for (i = 0; i < line_count; i++) {
+		   				for (j = 0; j < colum_count; j++) {								
+							if (((i % 2 == 0)&&(j % 2 == 0))||((i % 2 == 1)&&(j % 2 == 1))){
+								document.getElementById(i+""+j).style.background = "#240b4f";
+							}
+						}
+					}
+					 
+					//проверка на ход
+					if ((move_b & this.attr("fill")=='#000')|(!move_b & this.attr("fill")=='#f00')){
+						//Запрет на выхождение за доску (лево/верх) - возвращается обратно
+						if (arr_x<0 | arr_y<0 | arr_x > colum_count-1 | arr_y >line_count-1) {
+							this.animate({r: 20, cx: ox, cy: oy}, 500, ">");
+							return;
+						}
+						//проверка на цвет клетки
+						if (((arr_x % 2 == 0)&&(arr_y % 2 != 0))||((arr_x % 2 == 1)&&(arr_y % 2 != 1))){
+							alert ("Шашки ходят только на черные");
+							this.animate({r: 20, cx: ox, cy: oy}, 500, ">");
+							return;
+						}
+						//проверка на занятость клетки
+						if (arr_check[arr_x][arr_y]!="n"){
+							alert ("Клетка занята");
+							this.animate({r: 20, cx: ox, cy: oy}, 500, ">");
+							return;
+						}
+
+						
+
+						
+						//выравнивание по сетке
+						x = arr_x*50+25+arr_x*4;
+						y = arr_y*50+25+arr_y*2;
+						
+						
+						//если съесть можно через одну
+						if ((Math.abs(arr_oy-arr_y)==2 && Math.abs(arr_ox-arr_x)==2)){
+							var eat_y;
+							var eat_x;
+							//координаты той, что едим
+							if (arr_oy>arr_y){
+								eat_y=arr_oy-1;
+							} else{
+								eat_y=arr_y-1;
+							}
+							if (arr_ox>arr_x){
+								eat_x=arr_ox-1;
+							} else{
+								eat_x=arr_x-1;
+							}
+					
+							elem = paper.getElementsByPoint(eat_x*54+25,eat_y*52+25)[0];
+							console.log(eat_x+" "+eat_y);
+							
+							
+
+							//чужую ли едим
+							if (move_b){
+								if (arr_check[eat_x][eat_y]=="r"){
+									alert ("eat");
+									arr_check[arr_ox][arr_oy]="n";
+									arr_check[eat_x][eat_y]="n";
+									arr_check[arr_x][arr_y]="b";
+									r_count--;
+									document.getElementById("inr").innerHTML="<h2>Счет</h2>краcных " + r_count+'<br>'+"черных " + b_count;								
+									this.animate({r: 20, cx: x, cy: y}, 500, ">");
+									elem.remove();
+									if (r_count == 0) alert (" Game over. Black win");								
+									return;
+								} else { alert ("Нельзя есть свои"); this.animate({r: 20, cx: ox, cy: oy}, 500, ">"); return;}
+							} else {
+								if (arr_check[eat_x][eat_y]=="b"){
+									arr_check[arr_ox][arr_oy]="n";	
+									arr_check[eat_x][eat_y]="n";
+									arr_check[arr_x][arr_y]="r";
+									b_count--;
+									document.getElementById("inr").innerHTML="<h2>Счет</h2>краcных " + r_count+'<br>'+"черных " + b_count;
+									this.animate({r: 20, cx: x, cy: y}, 500, ">");
+									elem.remove();	
+									if (b_count == 0) alert (" Game over. Red win");									
+									return;
+								}else { alert ("Нельзя есть свои"); this.animate({r: 20, cx: ox, cy: oy}, 500, ">"); return;}
+							}
+							//eat.attr({fill: "#333"});
+							
+						}
+						
+						//ход на более чем одну ячейку
+						if ((Math.abs(arr_oy-arr_y)>1||Math.abs(arr_ox-arr_x)>1)) {
+							alert("Неверный ход");
+							this.animate({r: 20, cx: ox, cy: oy}, 500, ">");
+							return;
+						}
+						
+						//ход назад запрещен
+						if (move_b & arr_oy-arr_y<0){
+								alert("Шашки не ходят назад");
+								
+								this.animate({r: 20, cx: ox, cy: oy}, 500, ">");
+								
+								return;							
+						}
+						
+						if (!move_b & arr_y-arr_oy<0){
+								alert("Шашки не ходят назад");
+								this.animate({r: 20, cx: ox, cy: oy}, 500, ">");
+								return;							
+						}
+						
+						
+						//смена хода
+						this.toBack();
+						if (move_b) {
+							move_b=false;
+							arr_check[arr_x][arr_y]="b";
+							document.getElementById("step").innerHTML='<h2>Ход <br><font color="red">КРАСНЫХ</font></h2>';
+						}
+						else {
+							move_b=true;
+							arr_check[arr_x][arr_y]="r";
+							document.getElementById("step").innerHTML='<h2>Ход <br><font color="black">ЧЕРНЫХ</font></h2>';
+						}
+						arr_check[arr_ox][arr_oy]="n";	
+						this.animate({r: 20, cx: x, cy: y}, 500, ">");
+						
+					} else { // если ходит вне очереди
+						alert ("Не ваш ход");
+						x=ox;
+						y=oy;
+						this.animate({r: 20, cx: x, cy: y}, 500, ">");
+						return;
+					}
+
+						
+
+					 
+                    this.animate({r: 20, cx: x, cy: y}, 500, ">");				
+                };
+				
+	            stred.drag(move, start, up);			
+				stblack.drag(move, start, up);
+
+
+		};
+
+		
+
+
+		
+ </script>
+ <div class="div-main">
+	<div class="header">
+		<table class="header-table">
+			<tr>
+				<td>
+					Столбцы: <input id = "column" type="number" min="3" max="10" value="8" class="header-input"> 
+				</td>
+				<td>
+					Строки: <input id = "line" type="number" min="3" max="10" value="8" class="header-input"> 
+				</td>			
+			</tr>
+			<tr>
+				<td colspan="2">
+					<button id="generate" onclick = "generate_table()" class="header-button">Обновить доску</button> 
+				</td>	
+			</tr>
+		</table>
+	</div>
+		<div class="vnesh">
+           <div class="vnutr">
+               <div class="left" id="step"><h2>Ход <br><font color="black">ЧЕРНЫХ</font></h2></div>
+               
+               <div class="center">
+					<div class="right"> <div id="inr"> </div></div>	
+               		<div class="kont">
+               			<div id="desk" class="div-desk" ></div>
+               		</div>				
+			
+		</div>	
+               <div id="podporka"></div>
+           </div>
+     </div>
+</div>
+</body>
+</html>
